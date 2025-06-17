@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: vineetsaini13/3tier-backend
+          ports:
+            - containerPort: 3500
+          resources:
+            requests:
+              cpu: "100m"
+            limits:
+              cpu: "500m"
+          env:
+            - name: host
+              value: mysql-service
+            - name: user
+              value: root
+            - name: password
+              value: mysql123
+            - name: database
+              value: school
+            - name: REACT_APP_API_BASE_URL
+              value: http://backend-service:3500
+          volumeMounts:
+            - name: init-script
+              mountPath: /app/init.sql
+              subPath: init.sql
+      volumes:
+        - name: init-script
+          configMap:
+            name: backend-init-sql

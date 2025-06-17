@@ -1,0 +1,53 @@
+trigger: none
+
+pool:
+  name: custom-pool
+
+stages:
+  - stage: Build
+    displayName: Build and Push Docker Images
+    jobs:
+      - job: BuildJob
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSource: 'spec'
+              versionSpec: '20.x'
+            displayName: Install Node.js
+
+          - script: |
+              cd frontend
+              npm ci
+              npm install react-scripts
+              npm install dotenv
+              npm run build
+              docker build -t sahilrajputwins/frontend-image:latest .
+
+              cd ../backend
+              npm install
+              npm install dotenv
+              docker build -t sahilrajputwins/backend-image:latest .
+            displayName: Build frontend & backend Docker images
+
+          - script: |
+              echo $(DOCKER_PASSWORD) | docker login -u $(DOCKER_USERNAME) --password-stdin
+              docker push sahilrajputwins/frontend-image:latest
+              docker push sahilrajputwins/backend-image:latest
+            displayName: Push Docker images to Docker Hub
+
+  - stage: Deploy
+    displayName: Deploy using Docker Compose
+    dependsOn: Build
+    jobs:
+      - job: DeployJob
+        steps:
+          - script: |
+              cd ../..
+              sudo rm -rf 3TA-image
+              sudo mkdir 3TA-image
+              sudo cp -rf $(Build.Repository.LocalPath)/pull-image-docker-compose.yaml 3TA-image/
+              sudo cp -rf $(Build.Repository.LocalPath)/init.sql 3TA-image/
+              cd 3TA-image
+              docker compose -f pull-image-docker-compose.yaml down
+              docker compose -f pull-image-docker-compose.yaml up -d
+            displayName: Deploy using Docker Compose

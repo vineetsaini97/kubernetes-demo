@@ -1,0 +1,43 @@
+trigger: none
+
+pool:
+  name: custom-pool
+
+steps:
+  - task: NodeTool@0
+    inputs:
+        versionSource: 'spec'
+        versionSpec: '20.x'
+    displayName: install node
+    
+  - script: |
+      cd frontend
+      npm ci
+      npm install react-scripts
+      npm install dotenv
+      npm run build
+    
+      cd ..
+      cd backend
+      npm install
+      npm install dotenv
+      cd ..
+    displayName: Setup frontend and backend
+
+  - script: |
+      cd ..
+      cd ..
+      cd ..
+      sudo rm -r 3TA
+      mkdir 3TA
+      sudo cp -rf $(Build.Repository.LocalPath)/* 3TA
+    displayName: 'Add code files to VM'
+
+  - script: |
+      cd ..
+      cd ..
+      cd ..
+      cd 3TA
+      docker compose down
+      docker compose up --build -d
+    displayName: Deploy 3TA

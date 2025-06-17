@@ -1,0 +1,38 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+  nginx:
+    image: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend/build:/usr/share/nginx/html:ro
+    networks:
+        - three-tier-net
+
+  backend:
+      build: 
+        context: ./backend
+        dockerfile: Dockerfile
+      ports:
+        - 3500:3500
+      networks:
+        - three-tier-net
+    
+  db:
+      image: mysql
+      ports:
+        - 3306:3306
+      environment:
+        - MYSQL_ROOT_PASSWORD=mysql123
+        - MYSQL_DATABASE=school
+      networks:
+        - three-tier-net
+networks:
+  three-tier-net:
+    name: three-tier-net
+    driver: bridge
