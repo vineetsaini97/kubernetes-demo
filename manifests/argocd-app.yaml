@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/vineetsaini97/kubernetes-demo.git
     targetRevision: master
-    path: .
+    path: manifests
   destination:
     server: https://kubernetes.default.svc
     namespace: default
